@@ -1,79 +1,138 @@
-import React, {useState} from 'react';
-import {Card, Col, Row, Typography, Modal, Form, Input} from "antd";
+import React, {useEffect, useState} from 'react';
+import {Card, Col, Row, Typography, Modal, Form, Input, message} from "antd";
 import {DeleteOutlined, EditOutlined, StopOutlined, InfoCircleOutlined} from "@ant-design/icons";
+import {useNavigate} from "react-router-dom";
+import {useDispatch, useSelector} from "react-redux";
+import {getOffers} from "../../../redux/actions/account";
+import {deleteOffer} from "../../../redux/actions/offers";
 
 const {Title, Text} = Typography;
 
 const RejectedOffers = (props) => {
 
-    function rejectionInfo() {
+    const navigate = useNavigate();
+    const dispatch = useDispatch();
+    const {offers} = useSelector(state => state.account);
+    const {isAuthenticated} = useSelector(state => state.auth);
+
+    const [offerIdForDelete, setOfferIdForDelete] = useState(null);
+    const [visible, setVisible] = useState(false);
+    const [confirmLoading, setConfirmLoading] = useState(false);
+    const [modalText, setModalText] = useState('Are you sure you want to delete this offer?');
+
+    const showModal = (offerId) => {
+        setOfferIdForDelete(offerId);
+        setVisible(true);
+    };
+
+    const handleOk = () => {
+        setModalText('The modal will be closed after two seconds');
+        setConfirmLoading(true);
+        dispatch(deleteOffer(offerIdForDelete))
+            .then(() => {
+                dispatch(getOffers('rejected'))
+                    .then(() => {
+                        message.success('offer successfully deleted');
+                        setVisible(false);
+                        setConfirmLoading(false);
+                    })
+                    .catch(errorText => {
+                        setVisible(false);
+                        setConfirmLoading(false);
+                        message.error(errorText);
+                    });
+            })
+            .catch(errorText => {
+                setVisible(false);
+                setConfirmLoading(false);
+                message.error(errorText);
+            });
+    };
+
+    const handleCancel = () => {
+        setVisible(false);
+    };
+
+    useEffect(() => {
+        dispatch(getOffers('rejected'))
+            .catch(errorText => {
+                message.error(errorText);
+            });
+    }, []);
+
+    const rejectionInfo = () => {
         Modal.error({
             title: 'Details about rejection',
             content: (
                 <div>
-                    <p>Your offer was denied activation due to image theft. We have discovered that the images you are using in your offer have been stolen from another offer. Please upload your photos and submit for re-moderation.</p>
+                    <p>Your offer was rejected. Details were sent to your email. Please upload your photos and submit
+                        for re-moderation.</p>
                 </div>
             ),
-            onOk() {},
+            onOk() {
+            },
         });
     }
 
     return (
         <div className="site-layout-content">
-            <Title level={5} style={{marginBottom: '20px'}}>1 rejected offer</Title>
+            <Modal
+                title="Confirm deletion"
+                visible={visible}
+                onOk={handleOk}
+                confirmLoading={confirmLoading}
+                onCancel={handleCancel}
+            >
+                <p>{modalText}</p>
+            </Modal>
+            <Title level={5} style={{marginBottom: '20px'}}>Rejected offers: {offers ? offers.length : ''}</Title>
             <Row gutter={[16, 24]}>
-                {
-                    [1].map((value) => {
-                        const car = value === 1 ? 'BMW M5 F10' : 'Porsche 911 Turbo S (992)';
-                        const cost = value === 1 ? '60 000 USD' : '98 000 USD';
-                        const prob = value === 1 ? '28 000 miles' : '14 000 miles';
-                        const image = value === 1
-                            ? 'https://images.unsplash.com/photo-1635770310392-1b02340432ad?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=764&q=80'
-                            : 'https://images.unsplash.com/photo-1576289668060-47fd82c89bb6?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80';
-
-                        return (
-                            <Col
-                                key={value}
-                                className="gutter-row"
-                                xs={32}
-                                lg={8}
-                                style={{width: '100%'}}
+                {offers && offers.map((offer) => {
+                    return (
+                        <Col
+                            key={offer.id}
+                            className="gutter-row"
+                            xs={32}
+                            lg={8}
+                            style={{width: '100%'}}
+                        >
+                            <Card
+                                cover={
+                                    <img
+                                        alt="example"
+                                        src={`http://localhost:3000/uploads/${offer.images[0]['name']}`}
+                                        style={{width: '100%', height: '200px', objectFit: 'cover', cursor: 'pointer'}}
+                                        onClick={() => navigate(`/cars/${offer.id}`)}
+                                    />
+                                }
+                                actions={[
+                                    <EditOutlined onClick={() => navigate(`/cars/${offer.id}/edit`)} key={'edit'}/>,
+                                    <DeleteOutlined onClick={() => {showModal(offer.id)}} key={'delete'}/>,
+                                    <InfoCircleOutlined style={{color: 'red'}} key={'details'} onClick={rejectionInfo}/>
+                                ]}
                             >
-                                <Card
-                                    cover={
-                                        <img
-                                            alt="example"
-                                            src={image}
-                                            style={{width: '100%', height: '200px', objectFit: 'cover'}}
-                                        />
-                                    }
-                                    actions={[
-                                        <EditOutlined key={'edit'}/>,
-                                        <StopOutlined key={'stop'}/>,
-                                        <DeleteOutlined key={'delete'}/>,
-                                        <InfoCircleOutlined style={{color: 'red'}} key={'details'} onClick={rejectionInfo}/>
-                                    ]}
-                                >
-                                    <Row gutter={[0, 8]}>
-                                        <Col style={{fontSize: '16px'}} span={24} className="gutter-row">
-                                            <Text strong>{car}</Text>
-                                        </Col>
-                                        <Col style={{fontSize: '16px'}} span={24} className="gutter-row">
-                                            <Text type="success">{cost}</Text>
-                                        </Col>
-                                        <Col style={{fontSize: '16px'}} span={24} className="gutter-row">
-                                            <Text>{prob}</Text>
-                                        </Col>
-                                        <Col span={24} className="gutter-row">
-                                            <Text type="secondary">This car is vary beautiful and...</Text>
-                                        </Col>
-                                    </Row>
-                                </Card>
-                            </Col>
-                        )
-                    })
-                }
-            </Row></div>
+                                <Row gutter={[0, 8]}>
+                                    <Col style={{fontSize: '16px'}} span={24} className="gutter-row">
+                                        <Text strong>
+                                            {`${offer.mark.name} ${offer.model.name} ${offer.generation.generation}`}
+                                        </Text>
+                                    </Col>
+                                    <Col style={{fontSize: '16px'}} span={24} className="gutter-row">
+                                        <Text type="success">120000 USD</Text>
+                                    </Col>
+                                    <Col style={{fontSize: '16px'}} span={24} className="gutter-row">
+                                        <Text>60000 miles</Text>
+                                    </Col>
+                                    <Col span={24} className="gutter-row">
+                                        <Text type="secondary">{offer.description}</Text>
+                                    </Col>
+                                </Row>
+                            </Card>
+                        </Col>
+                    )
+                })}
+            </Row>
+        </div>
     )
 };
 

@@ -1,16 +1,92 @@
-import React, {useState} from 'react';
-import {AutoComplete, Button, Col, Row, Typography, Carousel, Card} from "antd";
-import {HeartOutlined, StopOutlined} from "@ant-design/icons";
+import React, {useEffect, useState} from 'react';
+import {Button, Col, Row, Typography, Carousel, Card, message} from "antd";
+import {HeartOutlined, HeartFilled, StopOutlined} from "@ant-design/icons";
+import {useParams} from "react-router-dom";
+import {getOffer, updateOfferStatus} from "../../redux/actions/offers";
+import {useDispatch, useSelector} from "react-redux";
+import {getCurrentUser} from "../../redux/actions/users";
+import {addOfferToFavourites, removeOfferFromFavourites} from "../../redux/actions/account";
+import offers from "../../redux/reducers/offers";
 
 const {Title, Text} = Typography;
 
 const Offer = () => {
+    const params = useParams();
+    const dispatch = useDispatch();
+    const {current} = useSelector(state => state.offers);
+    const {current: currentUser} = useSelector(state => state.users);
+
+    const [isActivateButtonDisabled, setIsActivateButtonDisabled] = useState(false);
+    const [isRejectButtonDisabled, setIsRejectButtonDisabled] = useState(false);
+
+    const [isActivationLoading, setIsActivationLoading] = useState(false);
+    const [isRejectionLoading, setIsRejectionLoading] = useState(false);
+
+    const [isFavouriteLoading, setIsFavouriteLoading] = useState(false);
+
+    useEffect(() => {
+        console.log(params);
+        dispatch(getOffer(params.offerId))
+            .catch(errorText => {
+                message.error(errorText);
+            })
+        dispatch(getCurrentUser())
+            .catch(errorText => {
+                message.error(errorText);
+            })
+    }, []);
+
+    const onActivation = () => {
+        setIsActivateButtonDisabled(true);
+        setIsActivationLoading(true);
+        dispatch(updateOfferStatus(params.offerId, '625f04f426c20807d265ef41'))
+            .then(() => {
+                setIsActivationLoading(false);
+                setIsRejectButtonDisabled(false);
+                dispatch(getOffer(params.offerId))
+                    .catch(errorText => {
+                        message.error(errorText);
+                    })
+            })
+            .catch(errorText => {
+                message.error(errorText);
+            });
+    }
+
+    const onRejection = () => {
+        setIsRejectButtonDisabled(true);
+        setIsRejectionLoading(true);
+        dispatch(updateOfferStatus(params.offerId, '625f04f426c20807d265ef43'))
+            .then(() => {
+                setIsRejectionLoading(false);
+                setIsActivateButtonDisabled(false);
+                dispatch(getOffer(params.offerId))
+                    .catch(errorText => {
+                        message.error(errorText);
+                    })
+            })
+            .catch(errorText => {
+                message.error(errorText);
+            });
+    }
+
+    const onAddToFavourite = () => {
+        if(current){
+            dispatch(addOfferToFavourites(current.offer['_id']));
+        }
+    }
+
+    const onRemoveFromFavourites = () => {
+        if(current){
+            dispatch(removeOfferFromFavourites(current.offer['_id']));
+        }
+    }
 
     return (
         <div style={{backgroundColor: '#fff'}}>
-            <div
+            {current && <div
                 style={{
-                    backgroundImage: 'url(https://images.unsplash.com/photo-1610099610040-ab19f3a5ec35?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=764&q=80)',
+                    backgroundImage: `url(http://localhost:3000/uploads/${current.offer.images.find(image => image.isCover === true)['name']})`,
                     backgroundSize: 'cover',
                     backgroundPositionX: 'center',
                     backgroundPositionY: 'center',
@@ -29,23 +105,25 @@ const Offer = () => {
                             level={1}
                             style={{color: '#fff', textTransform: 'uppercase', textAlign: 'center'}}
                         >
-                            Mercedes-Benz S63 AMG W223 (2020 - 2022)
+                            {`${current.offer.mark.name} ${current.offer.model.name} ${current.offer.generation.generation}`}
                         </Title>
                     </Col>
                 </Row>
             </div>
-            <div style={{width: '86%', maxWidth: '1068px', margin: '0 auto', padding: '20px'}}>
+            }
+            {current && <div style={{width: '86%', maxWidth: '1068px', margin: '0 auto', padding: '20px'}}>
                 <Row style={{marginBottom: '20px'}}>
                     <Col span={24}>
-                        <Title level={4}>Mercedes-Benz S63 AMG W223</Title>
+                        <Title
+                            level={4}>{`${current.offer.mark.name} ${current.offer.model.name} ${current.offer.generation.generation}`}</Title>
                     </Col>
                     <Col span={24}>
                         <Row gutter={16}>
                             <Col>
-                                <Text>№23</Text>
+                                <Text>№{current.offer.id}</Text>
                             </Col>
                             <Col>
-                                <Text>created 12.04.2022</Text>
+                                <Text>created {current.offer.createdAt}</Text>
                             </Col>
                             <Col>
                                 <Text>11 views</Text>
@@ -56,46 +134,17 @@ const Offer = () => {
                 <Row gutter={32}>
                     <Col span={16}>
                         <Carousel autoplay arrows style={{marginBottom: '20px'}}>
-                            <div>
-                            <img
-                                alt="example"
-                                src="https://images.unsplash.com/photo-1619221496652-7ee3d7406203?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1631&q=80"
-                                style={{height: '400px', width: '100%', objectFit: 'cover'}}
-                            />
-                            </div>
-                            <div>
-                            <img
-                                alt="example"
-                                src="https://images.unsplash.com/photo-1629019879059-2a0345f93aea?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=687&q=80"
-                                style={{height: '400px', width: '100%', objectFit: 'cover'}}
-                            />
-                            </div>
-                            <div>
-                            <img
-                                alt="example"
-                                src="https://images.unsplash.com/photo-1629019878224-7fe58daab3c9?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=687&q=80"
-                                style={{height: '400px', width: '100%', objectFit: 'cover'}}
-                            />
-                            </div>
-                            <div>
-                            <img
-                                alt="example"
-                                src="https://images.unsplash.com/photo-1629019878898-77222937b153?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=687&q=80"
-                                style={{height: '400px', width: '100%', objectFit: 'cover'}}
-                            />
-                            </div>
+                            {current.offer.images.map(image => (
+                                <div>
+                                    <img
+                                        alt={image.name}
+                                        src={`http://localhost:3000/uploads/${image.name}`}
+                                        style={{height: '400px', width: '100%', objectFit: 'cover'}}
+                                    />
+                                </div>
+                            ))}
                         </Carousel>
-                        <Text>Sell w222 restyling with low original mileage.
-                            With an updated OM656 engine for 340 horses and just hurricane dynamics (which is
-                            fundamentally different from OM642 3.0 diesel).
-                            I am the 2nd owner (1st owner of Mercedes Benz Rus), for the entire period of operation
-                            there was not a single accident, according to CASCO, the windshield was changed once and the
-                            rear right door was painted (there is nothing else painted on the car).
-                            I always looked after the car both technically and aesthetically, until recently the car was
-                            almost completely covered with armor film (so there are no chips or scratches), when
-                            dismantling the film, the body was completely polished and covered with Nxtzen ceramic with
-                            Graphene additive (car shines like new, due to the hydrophobic property it gets less dirty
-                            in bad weather).</Text>
+                        <Text>{current.offer.description}</Text>
                     </Col>
                     <Col span={8}>
                         <Row gutter={[0, 32]}>
@@ -103,7 +152,7 @@ const Offer = () => {
                                 <Card
                                     style={{width: '100%'}}
                                     actions={[
-                                        <HeartOutlined key={'favorite'}/>,
+                                        current.isFavourite ? <HeartFilled key={'favorite'} onClick={onRemoveFromFavourites}/> : <HeartOutlined onClick={onAddToFavourite} key={'favorite'}/>,
                                         <StopOutlined key={'stop'}/>,
                                     ]}
                                 >
@@ -124,22 +173,57 @@ const Offer = () => {
                                     <Row gutter={[0, 8]}>
                                         <Col style={{fontSize: '16px', fontWeight: '500', marginBottom: '20px'}}
                                              span={24} className="gutter-row">
-                                            <Text>Vladimir</Text>
+                                            <Text>{current.offer.seller.firstName}</Text>
                                         </Col>
                                         <Col style={{fontSize: '16px'}} span={24} className="gutter-row">
-                                            <Text>vladimirm12@gmail.com</Text>
+                                            <Text>{current.offer.seller.email}</Text>
                                         </Col>
                                         <Col style={{fontSize: '16px'}} span={24} className="gutter-row">
-                                            <Text>+375447654577</Text>
+                                            <Text>{current.offer.seller.phoneNumber}</Text>
                                         </Col>
                                     </Row>
                                 </Card>
                             </Col>
+                            {currentUser && currentUser.role.name_en === 'admin' && <Col span={24}>
+                                <Card style={{width: '100%'}}>
+                                    <Row gutter={[0, 8]}>
+                                        <Col style={{fontSize: '16px', fontWeight: '500'}} span={24}
+                                             className="gutter-row">
+                                            <Text>Status: <Text
+                                                type="success">{current.offer.status.name_en}</Text></Text>
+                                        </Col>
+                                        <Col
+                                            style={{fontSize: '16px', fontWeight: '500'}}
+                                            span={24}
+                                            className="gutter-row"
+                                        >
+                                            <Button
+                                                type={'primary'}
+                                                style={{textTransform: 'uppercase', marginBottom: '12px'}}
+                                                loading={isActivationLoading}
+                                                disabled={isActivateButtonDisabled || current.offer.status.name_en === 'active'}
+                                                onClick={onActivation}
+                                            >
+                                                activate
+                                            </Button>
+                                            <Button
+                                                danger
+                                                type={'primary'}
+                                                style={{textTransform: 'uppercase'}}
+                                                loading={isRejectionLoading}
+                                                disabled={isRejectButtonDisabled || current.offer.status.name_en === 'rejected'}
+                                                onClick={onRejection}
+                                            >
+                                                reject
+                                            </Button>
+                                        </Col>
+                                    </Row>
+                                </Card>
+                            </Col>}
                         </Row>
                     </Col>
                 </Row>
-            </div>
-
+            </div>}
         </div>
     );
 }

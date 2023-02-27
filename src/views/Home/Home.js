@@ -10,7 +10,7 @@ const Home = () => {
     return (
         <Row
             style={{
-                backgroundImage: 'url(https://lh3.google.com/u/0/d/1Pj5yl-jWsQL_QiggpL5rJbA1l6BF7xka=w1400-h800-iv1)',
+                backgroundImage: 'url(/main.png)',
                 height: 'calc(100vh - 64px)',
                 textTransform: 'uppercase',
                 textAlign: 'center',

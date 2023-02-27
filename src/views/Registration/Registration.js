@@ -65,7 +65,7 @@ const Registration = () => {
                         <Input/>
                     </Form.Item>
                     <Form.Item
-                        name="phone_number"
+                        name="phoneNumber"
                         label={<label style={{color: '#fff'}}>Phone number</label>}
                         rules={[
                             {
@@ -77,7 +77,7 @@ const Registration = () => {
                         <Input/>
                     </Form.Item>
                     <Form.Item
-                        name="first_name"
+                        name="firstName"
                         label={<label style={{color: '#fff'}}>First name</label>}
                         rules={[
                             {
@@ -89,7 +89,7 @@ const Registration = () => {
                         <Input/>
                     </Form.Item>
                     <Form.Item
-                        name="last_name"
+                        name="lastName"
                         label={<label style={{color: '#fff'}}>Last name</label>}
                         rules={[
                             {
@@ -107,7 +107,7 @@ const Registration = () => {
                         rules={[
                             {
                                 required: true,
-                                message: 'Please input your password!',
+                                message: 'Please input your password',
                             },
                         ]}
                         hasFeedback
@@ -123,14 +123,14 @@ const Registration = () => {
                         rules={[
                             {
                                 required: true,
-                                message: 'Please confirm your password!',
+                                message: 'Please confirm your password',
                             },
                             ({getFieldValue}) => ({
                                 validator(_, value) {
                                     if (!value || getFieldValue('password') === value) {
                                         return Promise.resolve();
                                     }
-                                    return Promise.reject(new Error('The two passwords that you entered do not match!'));
+                                    return Promise.reject(new Error('Passwords that you entered do not match'));
                                 },
                             }),
                         ]}

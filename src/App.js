@@ -11,14 +11,11 @@ import Registration from "./views/Registration/Registration";
 import CreateOffer from "./views/CreateOffer/CreateOffer";
 import {useEffect} from "react";
 import axios from "axios";
+import EditOffer from "./views/EditOffer/EditOffer";
 
 const { Content } = Layout;
 
 function App() {
-    useEffect(() => {
-        // axios.post('https://cloud.eyedea.cz/api/v2/cardetect.json?', {});
-
-    }, [])
     return (
         <Layout>
             <NavBar/>
@@ -28,6 +25,7 @@ function App() {
                     <Route path={'/cars'} element={<Cars/>}/>
                     <Route path={'/cars/add'} element={<CreateOffer/>}/>
                     <Route path={'/cars/:offerId'} element={<Offer/>}/>
+                    <Route path={'/cars/:offerId/edit'} element={<EditOffer/>}/>
                     <Route path={'/profile/*'} element={<Profile/>}/>
                     <Route path={'/login'} element={<Login/>}/>
                     <Route path={'/registration'} element={<Registration/>}/>

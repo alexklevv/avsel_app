@@ -4,7 +4,7 @@ import {LoadingOutlined, PlusOutlined} from '@ant-design/icons';
 import {useDispatch, useSelector} from "react-redux";
 import {
     createOffer,
-    deleteFromGallery,
+    deleteFromGallery, editOffer,
     getCoverImage,
     getGallery,
     getGenerations,
@@ -14,7 +14,7 @@ import {
     setGallery
 } from "../../redux/actions/offers";
 import authHeader from "../../redux/services/AuthHeader";
-import {useNavigate} from "react-router-dom";
+import {useParams} from "react-router-dom";
 
 const {Title} = Typography;
 const {TextArea} = Input;
@@ -47,11 +47,11 @@ const beforeUpload = (file) => {
     return isJpgOrPng && isLt2M;
 }
 
-const CreateOffer = () => {
+const EditOffer = () => {
     const [form] = Form.useForm();
-    const navigate = useNavigate();
+    const params = useParams();
     const dispatch = useDispatch();
-    const {marks, models, generations, gallery} = useSelector(state => state.offers);
+    const {marks, models, generations, gallery, current: offer} = useSelector(state => state.offers);
 
     const [current, setCurrent] = useState(0);
 
@@ -80,7 +80,8 @@ const CreateOffer = () => {
     const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
-        dispatch(getMainImage())
+        console.log(params);
+        dispatch(getMainImage(params.offerId))
             .then((url) => {
                 setMainImageUrl(url);
                 setIsMainImageDisabled(false);
@@ -88,7 +89,7 @@ const CreateOffer = () => {
             .catch((errorText) => {
                 message.error(errorText);
             });
-        dispatch(getCoverImage())
+        dispatch(getCoverImage(params.offerId))
             .then((url) => {
                 setCoverImageUrl(url);
                 setIsCoverImageDisabled(false);
@@ -96,7 +97,7 @@ const CreateOffer = () => {
             .catch((errorText) => {
                 message.error(errorText);
             });
-        dispatch(getGallery())
+        dispatch(getGallery(params.offerId))
             .then(() => {
                 setIsGalleryDisabled(false);
             })
@@ -152,10 +153,9 @@ const CreateOffer = () => {
         newOfferData['modelId'] = checkedModelId;
         newOfferData['generationId'] = checkedGenerationId;
 
-        dispatch(createOffer(newOfferData))
+        dispatch(editOffer(newOfferData, params.offerId))
             .then(() => {
                 message.success('offer successfully created');
-                navigate('/profile/offers/moderation');
             })
             .catch(errorText => {
                 setIsLoading(false);
@@ -243,7 +243,7 @@ const CreateOffer = () => {
     };
 
     const handleRemoveFromGallery = (image) => {
-        dispatch(deleteFromGallery(image))
+        dispatch(deleteFromGallery(image, params.offerId))
             .catch((errorText) => {
                 message.error(errorText);
             });
@@ -251,12 +251,12 @@ const CreateOffer = () => {
 
     return (
         <div style={{padding: '30px 20% 0 20%', backgroundColor: '#fff'}}>
-            <Title level={3} style={{marginBottom: '50px'}}>Create offer to sell your car</Title>
+            <Title level={3} style={{marginBottom: '50px'}}>Change your offer</Title>
             <Steps current={current} style={{marginBottom: '30px'}}>
-                <Step key={'Main image'} title={'Main image'}/>
-                <Step key={'Cover image'} title={'Cover image'}/>
-                <Step key={'Cover image'} title={'Gallery'}/>
-                <Step key={'Info about car'} title={'Info about car'}/>
+                <Step key={'Change main image'} title={'Change main image'}/>
+                <Step key={'Change cover image'} title={'Change cover image'}/>
+                <Step key={'Change gallery'} title={'Change gallery'}/>
+                <Step key={'Enter new info about car'} title={'Enter new info about car'}/>
             </Steps>
             <div className="steps-content">
                 {current === 0 && (
@@ -267,7 +267,7 @@ const CreateOffer = () => {
                             listType="picture-card"
                             className="main_image_uploader"
                             showUploadList={false}
-                            action="http://localhost:3000/images/cars/main"
+                            action={`http://localhost:3000/images/cars/${params.offerId}/main`}
                             headers={authHeader()}
                             method={mainImageUrl ? 'PATCH' : 'POST'}
                             beforeUpload={beforeUpload}
@@ -289,7 +289,7 @@ const CreateOffer = () => {
                             listType="picture-card"
                             className="cover_image_uploader"
                             showUploadList={false}
-                            action="http://localhost:3000/images/cars/cover"
+                            action={`http://localhost:3000/images/cars/${params.offerId}/cover`}
                             headers={authHeader()}
                             method={coverImageUrl ? 'PATCH' : 'POST'}
                             beforeUpload={beforeUpload}
@@ -306,7 +306,7 @@ const CreateOffer = () => {
                         <Title style={{marginBottom: '20px'}} level={4}>Upload photos of your car for gallery (10
                             maximum)</Title>
                         <Upload
-                            action="http://localhost:3000/images/cars"
+                            action={`http://localhost:3000/images/cars/${params.offerId}`}
                             listType="picture-card"
                             fileList={gallery}
                             name="image"
@@ -463,11 +463,11 @@ const CreateOffer = () => {
                     <Button
                         type="primary"
                         onClick={() => {
-                        form
-                            .validateFields()
-                            .then((values) => {
-                                onSendingToModeration(values);
-                            });
+                            form
+                                .validateFields()
+                                .then((values) => {
+                                    onSendingToModeration(values);
+                                });
                         }}
                         loading={isLoading}
                     >
@@ -484,4 +484,4 @@ const CreateOffer = () => {
     );
 }
 
-export default CreateOffer;
+export default EditOffer;

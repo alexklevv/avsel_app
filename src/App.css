@@ -14,3 +14,7 @@
   float: right;
   margin: 16px 0 16px 24px;
 }
+
+.ant-upload-select-text {
+  width: 100%;
+}

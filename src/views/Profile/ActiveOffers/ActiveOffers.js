@@ -1,24 +1,81 @@
-import React from 'react';
-import {Typography, Row, Col, Card} from "antd";
+import React, {useEffect, useState} from 'react';
+import {Typography, Row, Col, Card, message, Modal} from "antd";
 import {EditOutlined, StopOutlined, DeleteOutlined} from "@ant-design/icons";
+import {useDispatch, useSelector} from "react-redux";
+import {useNavigate} from "react-router-dom";
+import {getOffers} from "../../../redux/actions/account";
+import {deleteOffer} from "../../../redux/actions/offers";
+
 const {Title, Text} = Typography;
 
-const ActiveOffers = (props) => (
-    <div className="site-layout-content">
-        <Title level={5} style={{marginBottom: '20px'}}>2 active offers</Title>
-        <Row gutter={[16, 24]}>
-            {
-                [1, 2].map((value) => {
-                    const car = value === 1 ? 'BMW M5 F10' : 'Porsche 911 Turbo S (992)';
-                    const cost = value === 1 ? '60 000 USD' : '98 000 USD';
-                    const prob = value === 1 ? '28 000 miles' : '14 000 miles';
-                    const image = value === 1
-                        ? 'https://images.unsplash.com/photo-1635770310392-1b02340432ad?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=764&q=80'
-                        : 'https://images.unsplash.com/photo-1576289668060-47fd82c89bb6?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1170&q=80';
+const ActiveOffers = () => {
+    const navigate = useNavigate();
+    const dispatch = useDispatch();
+    const {offers} = useSelector(state => state.account);
+    const {isAuthenticated} = useSelector(state => state.auth);
 
+    const [offerIdForDelete, setOfferIdForDelete] = useState(null);
+    const [visible, setVisible] = useState(false);
+    const [confirmLoading, setConfirmLoading] = useState(false);
+    const [modalText, setModalText] = useState('Are you sure you want to delete this offer?');
+
+    const showModal = (offerId) => {
+        setOfferIdForDelete(offerId);
+        setVisible(true);
+    };
+
+    const handleOk = () => {
+        setModalText('The modal will be closed after two seconds');
+        setConfirmLoading(true);
+        dispatch(deleteOffer(offerIdForDelete))
+            .then(() => {
+                dispatch(getOffers('active'))
+                    .then(() => {
+                        message.success('offer successfully deleted');
+                        setVisible(false);
+                        setConfirmLoading(false);
+                    })
+                    .catch(errorText => {
+                        setVisible(false);
+                        setConfirmLoading(false);
+                        message.error(errorText);
+                    });
+            })
+            .catch(errorText => {
+                setVisible(false);
+                setConfirmLoading(false);
+                message.error(errorText);
+            });
+    };
+
+    useEffect(() => {
+        dispatch(getOffers('active'))
+            .catch(errorText => {
+                message.error(errorText);
+            });
+    }, []);
+
+    const handleCancel = () => {
+        setVisible(false);
+    };
+
+    return (
+        <div className="site-layout-content">
+            <Modal
+                title="Confirm deletion"
+                visible={visible}
+                onOk={handleOk}
+                confirmLoading={confirmLoading}
+                onCancel={handleCancel}
+            >
+                <p>{modalText}</p>
+            </Modal>
+            <Title level={5} style={{marginBottom: '20px'}}>Active offers: {offers ? offers.length : ''}</Title>
+            <Row gutter={[16, 24]}>
+                {offers && offers.map((offer) => {
                     return (
                         <Col
-                            key={value}
+                            key={offer.id}
                             className="gutter-row"
                             xs={32}
                             lg={8}
@@ -28,37 +85,39 @@ const ActiveOffers = (props) => (
                                 cover={
                                     <img
                                         alt="example"
-                                        src={image}
-                                        style={{width: '100%', height: '200px', objectFit: 'cover'}}
+                                        src={`http://localhost:3000/uploads/${offer.images[0]['name']}`}
+                                        style={{width: '100%', height: '200px', objectFit: 'cover', cursor: 'pointer'}}
+                                        onClick={() => navigate(`/cars/${offer.id}`)}
                                     />
                                 }
                                 actions={[
-                                    <EditOutlined key={'edit'} />,
-                                    <StopOutlined key={'stop'}/>,
-                                    <DeleteOutlined key={'delete'} />
+                                    <EditOutlined onClick={() => navigate(`/cars/${offer.id}/edit`)} key={'edit'}/>,
+                                    <DeleteOutlined onClick={() => {showModal(offer.id)}} key={'delete'}/>
                                 ]}
                             >
                                 <Row gutter={[0, 8]}>
                                     <Col style={{fontSize: '16px'}} span={24} className="gutter-row">
-                                        <Text strong>{car}</Text>
+                                        <Text strong>
+                                            {`${offer.mark.name} ${offer.model.name} ${offer.generation.generation}`}
+                                        </Text>
                                     </Col>
                                     <Col style={{fontSize: '16px'}} span={24} className="gutter-row">
-                                        <Text type="success">{cost}</Text>
+                                        <Text type="success">120000 USD</Text>
                                     </Col>
                                     <Col style={{fontSize: '16px'}} span={24} className="gutter-row">
-                                        <Text>{prob}</Text>
+                                        <Text>60000 miles</Text>
                                     </Col>
                                     <Col span={24} className="gutter-row">
-                                        <Text type="secondary">This car is vary beautiful and...</Text>
+                                        <Text type="secondary">{offer.description}</Text>
                                     </Col>
                                 </Row>
                             </Card>
                         </Col>
                     )
-                })
-            }
-        </Row>
-    </div>
-);
+                })}
+            </Row>
+        </div>
+    )
+};
 
 export default ActiveOffers;
